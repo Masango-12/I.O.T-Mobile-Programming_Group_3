@@ -1,0 +1,1 @@
+export const API_URL = "https://backend-yaf5.onrender.com"; // Replace with your backend URL

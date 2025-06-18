@@ -1,0 +1,67 @@
+{
+  "name": "Checkin",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "frontend"
+  ],
+  "dependencies": {
+  },
+  "expo": {
+    "name": "Checkin",
+    "slug": "checkin",
+    "owner": "hans_123",
+    "version": "1.0.0",
+    "sdkVersion": "53.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/speed.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/speed.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0d0d0d"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.yourcompany.networkinsights",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/speed.png",
+        "backgroundColor": "#0d0d0d"
+      },
+      "package": "com.yourcompany.networkinsights",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_NETWORK_STATE",
+        "ACCESS_WIFI_STATE",
+        "INTERNET"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/speed.png"
+    },
+    "plugins": [
+      "expo-location"
+    ],
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b37fea21-f330-4e41-9e7c-e4be44bc9399"
+      }
+    }
+  }
+}
