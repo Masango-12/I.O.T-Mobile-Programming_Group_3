@@ -1,16 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  TouchableOpacity, 
-  Animated, 
-  Easing, 
-  Alert, 
-  ActivityIndicator, 
-  SafeAreaView, 
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Easing,
+  Alert,
+  ActivityIndicator,
+  SafeAreaView,
   StatusBar,
-  Platform 
+  Platform
 } from 'react-native';
 import * as Location from 'expo-location';
 import * as Network from 'expo-network';
@@ -23,6 +23,7 @@ type TestPhase = 'idle' | 'latency' | 'download' | 'upload';
 
 // Create animated components
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
 const SpeedTestScreen = () => {
   // State Management
   const [downloadSpeed, setDownloadSpeed] = useState<number | null>(null);
@@ -33,16 +34,16 @@ const SpeedTestScreen = () => {
   const [networkType, setNetworkType] = useState<string>('Unknown');
   const [carrierName, setCarrierName] = useState<string>('Unknown');
   const [testPhase, setTestPhase] = useState<TestPhase>('idle');
-  
+
   // Animation refs
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const progressAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  
+
   // Constants
   const CIRCLE_RADIUS = 90;
   const CIRCUMFERENCE = 2 * Math.PI * CIRCLE_RADIUS;
-  const MAX_SPEED = 100; // Mbps
+  const MAX_SPEED = 15; // Mbps - realistic Cameroon maximum
 
   // Animation: Start pulse animation
   const startPulseAnimation = () => {
@@ -101,8 +102,6 @@ const SpeedTestScreen = () => {
   // Save test results to backend
   const saveTestResults = async (testData: any) => {
     try {
-      console.log('Saving test results:', testData);
-      
       const response = await fetch(`${API_BASE_URL}/api/tests`, {
         method: 'POST',
         headers: {
@@ -110,26 +109,24 @@ const SpeedTestScreen = () => {
         },
         body: JSON.stringify({
           ...testData,
-          userId: USER_ID, // Ensure user ID is set
+          userId: USER_ID,
         }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         throw new Error(
-          errorData.message || 
-          `Failed to save test results: ${response.status} ${response.statusText}`
+          errorData.message ||
+            `Failed to save test results: ${response.status} ${response.statusText}`
         );
       }
-      
+
       const result = await response.json();
-      console.log('Test results saved successfully:', result);
       return result;
     } catch (error) {
       console.error('Error saving test results:', error);
-      // Show error to user but don't fail the test
       Alert.alert(
-        'Warning', 
+        'Warning',
         'Test completed but results could not be saved. Please check your connection.'
       );
       return null;
@@ -141,23 +138,18 @@ const SpeedTestScreen = () => {
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
-        console.log('Location permission denied');
         return null;
       }
-      
+
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Low,
       });
-      
+
       return {
         type: 'Point',
-        coordinates: [
-          location.coords.longitude,
-          location.coords.latitude,
-        ],
+        coordinates: [location.coords.longitude, location.coords.latitude],
       };
     } catch (error) {
-      console.error('Error getting location:', error);
       return null;
     }
   };
@@ -169,17 +161,14 @@ const SpeedTestScreen = () => {
       await fetch(`${API_BASE_URL}/api/health`);
       return Date.now() - start;
     } catch (error) {
-      console.warn('Latency test failed, using fallback', error);
       return 50 + Math.random() * 50; // Fallback latency value (50-100ms)
     }
   };
 
-  // Run speed test
+  // Run speed test (simulate, total test not more than 5 seconds)
   const runSpeedTest = async () => {
     if (isTesting) return;
-    
     try {
-      // Reset states
       setIsTesting(true);
       setDownloadSpeed(null);
       setUploadSpeed(null);
@@ -194,49 +183,57 @@ const SpeedTestScreen = () => {
       // Phase 1: Latency Test
       setTestPhase('latency');
       const latencyResults = [];
-      
-      // Take 3 measurements for better accuracy
       for (let i = 0; i < 3; i++) {
         const latency = await testLatency();
         latencyResults.push(latency);
         setLatency(Math.round(average(latencyResults)));
-        await new Promise(resolve => setTimeout(resolve, 300));
+        await new Promise(resolve => setTimeout(resolve, 200));
       }
-      
       const avgLatency = Math.round(average(latencyResults));
       setLatency(avgLatency);
-      
-      // Calculate jitter (average deviation from mean latency)
+
+      // Calculate jitter
       const jitter = Math.round(
         latencyResults.reduce((sum, lat) => sum + Math.abs(lat - avgLatency), 0) / latencyResults.length
       );
       setJitter(jitter);
 
-      // Phase 2: Download Test
+      // Phase 2: Download Test (simulate, max 2 seconds)
       setTestPhase('download');
-      const downloadSpeed = 30 + Math.random() * 70; // Simulated download speed (30-100 Mbps)
-      
-      // Animate download progress
+      let downloadSpeedMbps = 0;
+      try {
+        const simulatedSpeed = 2 + Math.random() * 10; // 2-12 Mbps
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        downloadSpeedMbps = Math.max(0.5, Math.min(simulatedSpeed, MAX_SPEED));
+      } catch (err) {
+        downloadSpeedMbps = 2 + Math.random() * 2;
+      }
+
       Animated.timing(progressAnim, {
-        toValue: downloadSpeed / MAX_SPEED,
-        duration: 1500,
+        toValue: downloadSpeedMbps / MAX_SPEED,
+        duration: 800,
         easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
       }).start();
-      
-      setDownloadSpeed(downloadSpeed);
-      await new Promise(resolve => setTimeout(resolve, 1000));
 
-      // Phase 3: Upload Test
+      setDownloadSpeed(downloadSpeedMbps);
+
+      // Phase 3: Upload Test (simulate, max 2 seconds)
       setTestPhase('upload');
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      const uploadSpeed = 10 + Math.random() * 40; // Simulated upload speed (10-50 Mbps)
-      setUploadSpeed(uploadSpeed);
-      
+      let uploadSpeedMbps = 0;
+      try {
+        const simulatedUpload = 0.5 + Math.random() * 3; // 0.5-3.5 Mbps
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        uploadSpeedMbps = Math.max(0.2, Math.min(simulatedUpload, 4));
+      } catch (err) {
+        uploadSpeedMbps = 0.5 + Math.random() * 0.5;
+      }
+      setUploadSpeed(uploadSpeedMbps);
+
       // Prepare test data
       const testData = {
-        downloadSpeed: parseFloat(downloadSpeed.toFixed(2)),
-        uploadSpeed: parseFloat(uploadSpeed.toFixed(2)),
+        downloadSpeed: parseFloat(downloadSpeedMbps.toFixed(2)),
+        uploadSpeed: parseFloat(uploadSpeedMbps.toFixed(2)),
         ping: avgLatency,
         jitter: jitter || 0,
         carrier: carrierName,
@@ -244,17 +241,17 @@ const SpeedTestScreen = () => {
         testedAt: new Date().toISOString(),
         location: location || {
           type: 'Point',
-          coordinates: [0, 0], // Default coordinates if location is not available
+          coordinates: [0, 0],
         },
         userId: USER_ID,
       };
-      
+
       // Save test results to backend
       await saveTestResults(testData);
-      
+
       // Fade in results
       fadeInResults();
-      
+
     } catch (error) {
       console.error('Speed test failed:', error);
       Alert.alert('Connection Error', 'Unable to complete the speed test. Please check your internet connection.');
@@ -285,8 +282,8 @@ const SpeedTestScreen = () => {
 
   const getSpeedColor = (speed: number | null) => {
     if (speed === null) return '#9CA3AF';
-    if (speed < 10) return '#EF4444';
-    if (speed < 30) return '#F59E0B';
+    if (speed < 2) return '#EF4444';
+    if (speed < 6) return '#F59E0B';
     return '#10B981';
   };
 
@@ -303,7 +300,7 @@ const SpeedTestScreen = () => {
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar barStyle="light-content" backgroundColor="#111827" />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.networkInfo}>
@@ -322,7 +319,7 @@ const SpeedTestScreen = () => {
       {/* Main Content */}
       <View style={styles.container}>
         <Text style={styles.title}>Network Speed Test</Text>
-        
+
         {/* Speed Gauge */}
         <Animated.View style={[styles.speedGauge, { transform: [{ scale: animatedScale }] }]}>
           <Svg width="220" height="220" viewBox="0 0 220 220">
@@ -335,7 +332,7 @@ const SpeedTestScreen = () => {
               strokeWidth="12"
               fill="transparent"
             />
-            
+
             {/* Progress Circle */}
             <G rotation="-90" origin="110, 110">
               <AnimatedCircle
@@ -350,7 +347,7 @@ const SpeedTestScreen = () => {
                 fill="transparent"
               />
             </G>
-            
+
             {/* Center Text */}
             <SvgText
               x="50%"
@@ -362,7 +359,7 @@ const SpeedTestScreen = () => {
             >
               {testPhase === 'download' ? 'DOWNLOAD' : testPhase === 'upload' ? 'UPLOAD' : 'SPEED'}
             </SvgText>
-            
+
             <SvgText
               x="50%"
               y="60%"
@@ -373,7 +370,7 @@ const SpeedTestScreen = () => {
             >
               {downloadSpeed ? Math.round(downloadSpeed) : '--'}
             </SvgText>
-            
+
             <SvgText
               x="50%"
               y="75%"
@@ -387,9 +384,8 @@ const SpeedTestScreen = () => {
           </Svg>
         </Animated.View>
 
-
         {/* Test Button */}
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.testButton, { backgroundColor: buttonBgColor }]}
           onPress={runSpeedTest}
           disabled={isTesting}
@@ -403,7 +399,7 @@ const SpeedTestScreen = () => {
         </TouchableOpacity>
 
         {/* Results */}
-        <Animated.View 
+        <Animated.View
           style={[
             styles.resultsContainer,
             { opacity: fadeAnim }
@@ -420,7 +416,7 @@ const SpeedTestScreen = () => {
                 <Text style={styles.metricUnit}> Mbps</Text>
               </Text>
             </View>
-            
+
             <View style={styles.metricItem}>
               <Text style={styles.metricLabel}>Upload</Text>
               <Text style={[
@@ -432,7 +428,7 @@ const SpeedTestScreen = () => {
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.metricRow}>
             <View style={styles.metricItem}>
               <Text style={styles.metricLabel}>Latency</Text>
@@ -441,7 +437,7 @@ const SpeedTestScreen = () => {
                 <Text style={styles.metricUnit}> ms</Text>
               </Text>
             </View>
-            
+
             <View style={styles.metricItem}>
               <Text style={styles.metricLabel}>Jitter</Text>
               <Text style={styles.metricValue}>
@@ -455,8 +451,6 @@ const SpeedTestScreen = () => {
     </SafeAreaView>
   );
 };
-
-// Create animated circle component
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
