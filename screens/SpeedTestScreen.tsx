@@ -96,7 +96,7 @@ const SpeedTestScreen = () => {
   };
 
   // API configuration
-  const API_BASE_URL = 'https://backend-yaf5.onrender.com'; // Replace with your backend URL
+  const API_BASE_URL = 'https://backend-1-5ynd.onrender.com'; // Replace with your backend URL
   const USER_ID = 'demo-user-123'; // In a real app, use the actual user ID
 
   // Save test results to backend

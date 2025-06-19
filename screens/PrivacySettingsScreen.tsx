@@ -14,7 +14,7 @@ type PrivacySettingKey = 'backgroundMonitoring' | 'shareAnonymousData' | 'saveLo
 type PrivacySettings = Record<PrivacySettingKey, boolean>;
 
 // Backend URL and user ID
-const BACKEND_URL = 'https://backend-yaf5.onrender.com/api/privacy-settings';
+const BACKEND_URL = 'https://backend-1-5ynd.onrender.com/api/privacy-settings';
 const USER_ID = 'demo-user-123'; // Replace with real user ID in production
 
 const defaultSettings: PrivacySettings = {

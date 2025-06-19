@@ -22,7 +22,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 }
 
 // Backend API configuration
-const API_BASE_URL = "https://backend-yaf5.onrender.com"; // Replace with your actual backend IP or domain
+const API_BASE_URL = "https://backend-1-5ynd.onrender.com"; // Replace with your actual backend IP or domain
 const BACKEND_URL = `${API_BASE_URL}/api/tests`;
 const USER_ID = "demo-user-123"; // In a real app, use the actual user ID
 
